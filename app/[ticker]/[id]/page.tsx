@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import db from "@/lib/db";
+import pool from "@/lib/db";
 import { WATCHLIST } from "@/lib/companies";
 import { timeAgo } from "@/lib/utils";
 
@@ -45,12 +45,12 @@ export default async function ArticlePage({
   const { ticker, id } = await params;
   const upperTicker = ticker.toUpperCase();
 
-  const article = db!
-    .prepare(
-      `SELECT id, ticker, headline, summary, url, image, source, published_at
-       FROM articles WHERE id = ? AND ticker = ?`
-    )
-    .get(Number(id), upperTicker) as Article | undefined;
+  const { rows } = await pool.query<Article>(
+    `SELECT id, ticker, headline, summary, url, image, source, published_at
+     FROM articles WHERE id = $1 AND ticker = $2`,
+    [Number(id), upperTicker]
+  );
+  const article = rows[0] as Article | undefined;
 
   if (!article) notFound();
 

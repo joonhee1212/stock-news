@@ -1,17 +1,16 @@
-import db from "@/lib/db";
+import pool from "@/lib/db";
 import { getDashboardStats } from "@/lib/dashboard";
 import { timeAgo } from "@/lib/utils";
 import { DashboardGrid } from "./components/dashboard-grid";
 import { NavMenu } from "./components/nav-menu";
 
-export default function Home() {
-  const companies = getDashboardStats();
+export default async function Home() {
+  const companies = await getDashboardStats();
 
-  const lastRefresh = db
-    .prepare("SELECT MAX(fetched_at) as t FROM fetch_log")
-    .get() as { t: number | null };
-
-  const lastRefreshTime = lastRefresh.t ? timeAgo(lastRefresh.t) : null;
+  const { rows } = await pool.query<{ t: string | null }>(
+    "SELECT MAX(fetched_at) as t FROM fetch_log"
+  );
+  const lastRefreshTime = rows[0]?.t ? timeAgo(Number(rows[0].t)) : null;
 
   return (
     <div className="min-h-screen">

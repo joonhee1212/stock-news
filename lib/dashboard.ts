@@ -1,4 +1,4 @@
-import db from "./db";
+import pool from "./db";
 import { WATCHLIST } from "./companies";
 
 export interface CompanyStats {
@@ -12,19 +12,22 @@ export interface CompanyStats {
 
 const FRESH_SECONDS = 4 * 60 * 60;
 
-export function getDashboardStats(): CompanyStats[] {
+export async function getDashboardStats(): Promise<CompanyStats[]> {
   const cutoff = Math.floor(Date.now() / 1000) - FRESH_SECONDS;
 
-  const rows = db
-    .prepare(
-      `SELECT
-         ticker,
-         COUNT(*) as total,
-         COUNT(CASE WHEN published_at >= ? THEN 1 END) as fresh
-       FROM articles
-       GROUP BY ticker`
-    )
-    .all(cutoff) as { ticker: string; total: number; fresh: number }[];
+  const { rows } = await pool.query<{
+    ticker: string;
+    total: string;
+    fresh: string;
+  }>(
+    `SELECT
+       ticker,
+       COUNT(*) as total,
+       COUNT(CASE WHEN published_at >= $1 THEN 1 END) as fresh
+     FROM articles
+     GROUP BY ticker`,
+    [cutoff]
+  );
 
   const map = new Map(rows.map((r) => [r.ticker, r]));
 
@@ -37,8 +40,8 @@ export function getDashboardStats(): CompanyStats[] {
       ticker: company.ticker,
       isPrivate: company.isPrivate,
       dbTicker,
-      articleCount: stats?.total ?? 0,
-      freshCount: stats?.fresh ?? 0,
+      articleCount: stats ? Number(stats.total) : 0,
+      freshCount: stats ? Number(stats.fresh) : 0,
     };
   });
 }

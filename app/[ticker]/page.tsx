@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import db from "@/lib/db";
+import pool from "@/lib/db";
 import { WATCHLIST } from "@/lib/companies";
 import { rankArticles } from "@/lib/ranking";
 import { timeAgo } from "@/lib/utils";
@@ -58,15 +58,14 @@ export default async function CompanyPage({
   const company = resolveCompany(upperTicker);
   if (!company) notFound();
 
-  const candidates = db
-    .prepare(
-      `SELECT id, ticker, headline, summary, url, source, published_at
-       FROM articles
-       WHERE ticker = ?
-       ORDER BY published_at DESC
-       LIMIT 100`
-    )
-    .all(upperTicker) as Article[];
+  const { rows: candidates } = await pool.query<Article>(
+    `SELECT id, ticker, headline, summary, url, source, published_at
+     FROM articles
+     WHERE ticker = $1
+     ORDER BY published_at DESC
+     LIMIT 100`,
+    [upperTicker]
+  );
 
   const articles = rankArticles(candidates, 50);
   const imageSrc = COMPANY_IMAGES[upperTicker];
