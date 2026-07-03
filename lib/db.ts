@@ -43,6 +43,8 @@ export async function ensureSchema() {
     CREATE INDEX IF NOT EXISTS idx_articles_ticker_published
       ON articles(ticker, published_at DESC);
 
+    ALTER TABLE articles ADD COLUMN IF NOT EXISTS ai_summary TEXT;
+
     CREATE TABLE IF NOT EXISTS fetch_log (
       id            SERIAL PRIMARY KEY,
       ticker        TEXT    NOT NULL,

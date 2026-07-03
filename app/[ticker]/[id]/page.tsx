@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import pool from "@/lib/db";
 import { WATCHLIST } from "@/lib/companies";
 import { timeAgo } from "@/lib/utils";
+import AiSummary from "@/app/components/ai-summary";
 
 interface Article {
   id: number;
@@ -127,16 +128,8 @@ export default async function ArticlePage({
         {/* Divider */}
         <div className="mb-6" style={{ height: "1px", background: "rgba(0,0,0,0.06)" }} />
 
-        {/* Summary */}
-        {article.summary ? (
-          <p className="text-base leading-relaxed mb-8" style={{ color: "#374151" }}>
-            {article.summary}
-          </p>
-        ) : (
-          <p className="text-sm mb-8" style={{ color: "#6b7280" }}>
-            No excerpt available.
-          </p>
-        )}
+        {/* AI-generated summary (fetched on demand, cached in DB) */}
+        <AiSummary articleId={article.id} fallbackSummary={article.summary} />
 
         {/* Read original CTA */}
         {article.url && (
